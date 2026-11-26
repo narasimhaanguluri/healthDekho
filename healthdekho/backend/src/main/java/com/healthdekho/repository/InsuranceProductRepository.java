@@ -14,6 +14,8 @@ public interface InsuranceProductRepository extends JpaRepository<InsuranceProdu
 
     Optional<InsuranceProduct> findByProductCode(String productCode);
 
+    Optional<InsuranceProduct> findByProductCodeIgnoreCase(String productCode);
+
     Optional<InsuranceProduct> findByProductCodeIgnoreCaseAndActiveTrue(String productCode);
 
     @Query("""
