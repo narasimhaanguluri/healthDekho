@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { getAvailableProducts, getCurrentCustomer, getMyPolicies } from "../api/auth.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 
 export default function DashboardPage() {
   const { customer: sessionCustomer, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const [profileState, setProfileState] = useState({ loading: true, error: "", data: sessionCustomer });
   const [policiesState, setPoliciesState] = useState({ loading: true, error: "", data: [] });
@@ -102,11 +103,11 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <section aria-labelledby="my-policies-heading" className="dashboard-section">
+      <section aria-labelledby="my-policies-heading" className="dashboard-section" id="my-policies">
         <div className="section-header">
           <h2 id="my-policies-heading">My Policies</h2>
           {!policiesState.loading && !policiesState.error && (
-            <span className="count-pill">{policiesState.data.length}</span>
+            <span className="count-pill" data-testid="policy-count">{policiesState.data.length}</span>
           )}
         </div>
         {policiesState.loading && <p className="status-message" role="status">Loading your policies…</p>}
@@ -133,7 +134,11 @@ export default function DashboardPage() {
               <tbody>
                 {policiesState.data.map((policy) => (
                   <tr key={policy.policyNumber}>
-                    <td className="mono">{policy.policyNumber}</td>
+                    <td className="mono">
+                      <Link to={`/policies/${encodeURIComponent(policy.policyNumber)}`}>
+                        {policy.policyNumber}
+                      </Link>
+                    </td>
                     <td>{policy.policyName}</td>
                     <td><span className="type-badge">{policy.policyType}</span></td>
                     <td><span className="status-badge">{policy.policyStatus}</span></td>
@@ -180,8 +185,7 @@ export default function DashboardPage() {
                   </dl>
                   <button
                     className="register-button"
-                    disabled
-                    title="Policy registration will be enabled in FR-3"
+                    onClick={() => navigate(`/policies/register/${encodeURIComponent(product.productCode)}`)}
                     type="button"
                   >
                     Register
