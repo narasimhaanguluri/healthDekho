@@ -45,3 +45,13 @@ export async function getPolicyDetails(policyNumber) {
   const response = await apiClient.get(`/policies/${encodeURIComponent(policyNumber)}`);
   return response.data;
 }
+
+export async function generateRecommendations(payload) {
+  const response = await apiClient.post("/recommendations", payload);
+  return response.data;
+}
+
+export async function getRecommendationHistory({ page = 0, size = 20 } = {}) {
+  const response = await apiClient.get("/recommendations/history", { params: { page, size } });
+  return response.data;
+}
