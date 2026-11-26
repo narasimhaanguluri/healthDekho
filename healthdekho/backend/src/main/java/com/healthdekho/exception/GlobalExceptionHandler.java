@@ -48,6 +48,51 @@ public class GlobalExceptionHandler {
                 "The requested insurance product is unavailable.");
     }
 
+    @ExceptionHandler(ProductUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> productUnavailable() {
+        return problem(
+                HttpStatus.CONFLICT,
+                ApiErrorCodes.PRODUCT_UNAVAILABLE,
+                "Product unavailable",
+                "The selected insurance product is not currently active.");
+    }
+
+    @ExceptionHandler(AgeNotEligibleException.class)
+    public ResponseEntity<Map<String, Object>> ageNotEligible(AgeNotEligibleException exception) {
+        return problem(
+                HttpStatus.UNPROCESSABLE_ENTITY,
+                ApiErrorCodes.AGE_NOT_ELIGIBLE,
+                "Age not eligible",
+                exception.getMessage());
+    }
+
+    @ExceptionHandler(DuplicatePolicyException.class)
+    public ResponseEntity<Map<String, Object>> duplicatePolicy() {
+        return problem(
+                HttpStatus.CONFLICT,
+                ApiErrorCodes.DUPLICATE_POLICY,
+                "Duplicate policy",
+                "You have already registered this insurance product.");
+    }
+
+    @ExceptionHandler(PolicyNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> policyNotFound() {
+        return problem(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCodes.POLICY_NOT_FOUND,
+                "Policy not found",
+                "The requested policy was not found.");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> invalidBusinessArgument(IllegalArgumentException exception) {
+        return problem(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCodes.VALIDATION_FAILED,
+                "Validation failed",
+                exception.getMessage());
+    }
+
     @ExceptionHandler(InvalidPaginationException.class)
     public ResponseEntity<Map<String, Object>> invalidPagination(InvalidPaginationException exception) {
         return problem(
