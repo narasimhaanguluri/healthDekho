@@ -1,6 +1,7 @@
 package com.healthdekho.repository;
 
 import com.healthdekho.entity.InsuranceProduct;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,8 @@ public interface InsuranceProductRepository extends JpaRepository<InsuranceProdu
     Optional<InsuranceProduct> findByProductCodeIgnoreCase(String productCode);
 
     Optional<InsuranceProduct> findByProductCodeIgnoreCaseAndActiveTrue(String productCode);
+
+    List<InsuranceProduct> findByActiveTrueOrderByProductCodeAsc();
 
     @Query("""
             SELECT p FROM InsuranceProduct p
