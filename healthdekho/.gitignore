@@ -15,6 +15,10 @@ docs/
 .env.*
 *.env
 
+# tragets files
+backend/target/
+
+
 # Application Secrets
 application-local.properties
 application-dev.properties
