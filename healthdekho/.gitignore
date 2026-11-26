@@ -18,6 +18,9 @@ docs/
 # tragets files
 backend/target/
 
+#test
+backend/src/test/
+
 
 # Application Secrets
 application-local.properties
