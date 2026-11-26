@@ -93,6 +93,15 @@ public class GlobalExceptionHandler {
                 "The AI provider could not complete the request.");
     }
 
+    @ExceptionHandler(AiRecommendationUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> aiRecommendationUnavailable() {
+        return problem(
+                HttpStatus.BAD_GATEWAY,
+                ApiErrorCodes.AI_RECOMMENDATION_UNAVAILABLE,
+                "AI recommendation unavailable",
+                "Unable to generate validated insurance recommendations right now.");
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> invalidBusinessArgument(IllegalArgumentException exception) {
         return problem(
