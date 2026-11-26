@@ -34,3 +34,14 @@ export async function getProductDetails(productCode) {
   const response = await apiClient.get(`/products/${encodeURIComponent(productCode)}`);
   return response.data;
 }
+
+export async function registerPolicy(productCode, idempotencyKey) {
+  const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {};
+  const response = await apiClient.post("/policies", { productCode }, { headers });
+  return response.data;
+}
+
+export async function getPolicyDetails(policyNumber) {
+  const response = await apiClient.get(`/policies/${encodeURIComponent(policyNumber)}`);
+  return response.data;
+}
