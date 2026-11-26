@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from "./auth/AuthContext.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import PolicyDetailsPage from "./pages/PolicyDetailsPage.jsx";
+import PolicyRegistrationPage from "./pages/PolicyRegistrationPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 
 function HomeRedirect() {
@@ -19,6 +21,14 @@ export function AppRoutes() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/register" element={<SignupPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route
+        path="/policies/register/:productCode"
+        element={<ProtectedRoute><PolicyRegistrationPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/policies/:policyNumber"
+        element={<ProtectedRoute><PolicyDetailsPage /></ProtectedRoute>}
+      />
       <Route path="/account" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<main className="auth-card"><h1>Page not found</h1><Link to="/login">Return to sign in</Link></main>} />
     </Routes>
