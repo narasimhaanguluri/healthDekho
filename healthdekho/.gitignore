@@ -1,0 +1,34 @@
+# BMAD Files
+.bmad/
+_bmad-output/
+.agents/
+_bmad/
+
+# Documentation
+docs/
+
+# GitHub workflows/templates (optional)
+.github/
+
+# Environment Files
+.env
+.env.*
+*.env
+
+# Application Secrets
+application-local.properties
+application-dev.properties
+application-prod.properties
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# Logs
+logs/
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db
