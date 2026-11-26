@@ -9,8 +9,11 @@ vi.mock("../api/auth.js", () => ({
   getAvailableProducts: vi.fn(),
   getCurrentCustomer: vi.fn(),
   getMyPolicies: vi.fn(),
+  getPolicyDetails: vi.fn(),
+  getProductDetails: vi.fn(),
   loginCustomer: vi.fn(),
   registerCustomer: vi.fn(),
+  registerPolicy: vi.fn(),
 }));
 
 const customer = {
@@ -22,20 +25,20 @@ const customer = {
   dateOfBirth: "1993-02-14",
 };
 
+const hlt001Product = {
+  productCode: "HLT001",
+  policyName: "Health Secure Plus",
+  policyType: "HEALTH",
+  termMonths: 12,
+  premiumFrequency: "MONTHLY",
+  premiumAmount: "1500.00",
+  sumInsured: "500000.00",
+  minAge: 18,
+  maxAge: 60,
+};
+
 const availableProductsPage = {
-  items: [
-    {
-      productCode: "HLT001",
-      policyName: "Health Secure Plus",
-      policyType: "HEALTH",
-      termMonths: 12,
-      premiumFrequency: "MONTHLY",
-      premiumAmount: "1500.00",
-      sumInsured: "500000.00",
-      minAge: 18,
-      maxAge: 60,
-    },
-  ],
+  items: [hlt001Product],
   page: 0,
   size: 20,
   totalElements: 1,
@@ -52,7 +55,7 @@ function renderAt(path) {
   );
 }
 
-describe("FR-1 authentication and dashboard flow", () => {
+describe("FR-1 & FR-3 authentication, dashboard, and policy registration flow", () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     vi.clearAllMocks();
@@ -91,7 +94,7 @@ describe("FR-1 authentication and dashboard flow", () => {
     expect(screen.getByText(customer.email)).toBeInTheDocument();
     expect(await screen.findByText("No policies found")).toBeInTheDocument();
     expect(await screen.findByText("Health Secure Plus")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Register" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Register" })).toBeEnabled();
     expect(window.sessionStorage.getItem("healthdekho.accessToken")).toBe("test-access-token");
 
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
@@ -100,31 +103,94 @@ describe("FR-1 authentication and dashboard flow", () => {
     expect(window.sessionStorage.getItem("healthdekho.customer")).toBeNull();
   });
 
-  it("renders owned policies when present", async () => {
+  it("navigates from dashboard Register to registration page, submits policy, shows confirmation, and updates dashboard", async () => {
     window.sessionStorage.setItem("healthdekho.accessToken", "saved-token");
     window.sessionStorage.setItem("healthdekho.customer", JSON.stringify(customer));
     authApi.getCurrentCustomer.mockResolvedValue(customer);
-    authApi.getMyPolicies.mockResolvedValue([
-      {
-        policyNumber: "HD-2026-0001",
-        policyName: "Health Secure Plus",
-        policyType: "HEALTH",
-        policyTerm: 12,
-        startDate: "2026-01-01",
-        maturityDate: "2027-01-01",
-        premiumFrequency: "MONTHLY",
-        premiumAmount: "1500.00",
-        sumInsured: "500000.00",
-        policyStatus: "ACTIVE",
-      },
-    ]);
-    authApi.getAvailableProducts.mockResolvedValue(availableProductsPage);
+    authApi.getMyPolicies
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          policyNumber: "HD-2026-000001",
+          policyName: "Health Secure Plus",
+          policyType: "HEALTH",
+          policyTerm: 12,
+          startDate: "2026-11-26",
+          maturityDate: "2027-11-26",
+          premiumFrequency: "MONTHLY",
+          premiumAmount: "1500.00",
+          sumInsured: "500000.00",
+          policyStatus: "ACTIVE",
+        },
+      ]);
+    authApi.getAvailableProducts
+      .mockResolvedValueOnce(availableProductsPage)
+      .mockResolvedValueOnce({ items: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+    authApi.getProductDetails.mockResolvedValue(hlt001Product);
+    authApi.registerPolicy.mockResolvedValue({
+      policyNumber: "HD-2026-000001",
+      productCode: "HLT001",
+      policyName: "Health Secure Plus",
+      startDate: "2026-11-26",
+      maturityDate: "2027-11-26",
+      totalPremium: 18000,
+      installmentCount: 12,
+      message: "Policy registered successfully",
+    });
 
     renderAt("/dashboard");
 
-    expect(await screen.findByText("HD-2026-0001")).toBeInTheDocument();
-    expect(screen.getByText("ACTIVE")).toBeInTheDocument();
-    expect(screen.queryByText("No policies found")).not.toBeInTheDocument();
+    const registerBtn = await screen.findByRole("button", { name: "Register" });
+    fireEvent.click(registerBtn);
+
+    expect(await screen.findByRole("heading", { name: "Review and Register Policy" })).toBeInTheDocument();
+    expect(await screen.findByText("Health Secure Plus")).toBeInTheDocument();
+    expect(screen.getByText("18–60 years")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(await screen.findByRole("heading", { name: "Policy registered successfully" })).toBeInTheDocument();
+    expect(screen.getByText("HD-2026-000001")).toBeInTheDocument();
+    expect(screen.getByText("INR 18000.00")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(authApi.registerPolicy).toHaveBeenCalledWith("HLT001", expect.any(String));
+
+    fireEvent.click(screen.getByRole("button", { name: "Back To Dashboard" }));
+
+    expect(await screen.findByText("HD-2026-000001")).toBeInTheDocument();
+    expect(screen.getByTestId("policy-count")).toHaveTextContent("1");
+    expect(await screen.findByText("No available products found.")).toBeInTheDocument();
+  });
+
+  it("displays age eligibility error on registration page when server rejects", async () => {
+    window.sessionStorage.setItem("healthdekho.accessToken", "saved-token");
+    window.sessionStorage.setItem("healthdekho.customer", JSON.stringify(customer));
+    authApi.getCurrentCustomer.mockResolvedValue(customer);
+    authApi.getProductDetails.mockResolvedValue({
+      ...hlt001Product,
+      productCode: "HLT003",
+      policyName: "Senior Citizen Care",
+      minAge: 60,
+      maxAge: 80,
+    });
+    authApi.registerPolicy.mockRejectedValue({
+      response: {
+        status: 422,
+        data: {
+          code: "AGE_NOT_ELIGIBLE",
+          detail: "Customer age 33 is outside the eligible range of 60 to 80 years.",
+        },
+      },
+    });
+
+    renderAt("/policies/register/HLT003");
+
+    expect(await screen.findByText("Senior Citizen Care")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Customer age 33 is outside the eligible range of 60 to 80 years.",
+    );
   });
 
   it("creates an account with mobile number and matching passwords, then requires login", async () => {
