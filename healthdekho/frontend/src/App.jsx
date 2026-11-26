@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import PolicyDetailsPage from "./pages/PolicyDetailsPage.jsx";
 import PolicyRegistrationPage from "./pages/PolicyRegistrationPage.jsx";
+import RecommendationsPage from "./pages/RecommendationsPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 
 function HomeRedirect() {
@@ -21,6 +22,7 @@ export function AppRoutes() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/register" element={<SignupPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/recommendations" element={<ProtectedRoute><RecommendationsPage /></ProtectedRoute>} />
       <Route
         path="/policies/register/:productCode"
         element={<ProtectedRoute><PolicyRegistrationPage /></ProtectedRoute>}

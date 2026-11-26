@@ -82,9 +82,14 @@ export default function DashboardPage() {
           <p className="eyebrow">CUSTOMER DASHBOARD</p>
           <h1>Welcome to HealthDekho</h1>
         </div>
-        <button className="secondary-button topbar-signout" onClick={signOut} type="button">
-          Sign out
-        </button>
+        <div className="topbar-actions">
+          <Link className="primary-link-button" to="/recommendations">
+            AI Recommendations
+          </Link>
+          <button className="secondary-button topbar-signout" onClick={signOut} type="button">
+            Sign out
+          </button>
+        </div>
       </header>
 
       <section aria-labelledby="customer-info-heading" className="dashboard-section">

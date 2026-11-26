@@ -192,6 +192,54 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 .actions-row button { flex: 1 1 180px; margin-top: 0; }
 .schedule-heading { margin: 1.75rem 0 .9rem; font-size: 1.1rem; }
 
+.topbar-actions { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.primary-link-button, .secondary-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.15rem;
+  border-radius: 9px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.primary-link-button { color: #fff; background: #2058b4; }
+.primary-link-button:hover { color: #fff; background: #18478f; }
+.secondary-link-button { color: #245bc6; background: #eaf1fc; }
+.secondary-link-button:hover { color: #164596; background: #dce8f8; }
+
+textarea, select {
+  width: 100%;
+  min-height: 46px;
+  padding: .7rem .8rem;
+  border: 1px solid #cbd6e5;
+  border-radius: 9px;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+}
+textarea:focus, select:focus { border-color: #3471d4; outline: 3px solid rgb(52 113 212 / 17%); }
+
+.suitability-badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  font-size: .73rem;
+  font-weight: 700;
+  background: #f0ebff;
+  color: #5b2fc9;
+}
+.recommendation-reason { margin: 0 0 1rem; color: #3a4a63; font-size: .9rem; line-height: 1.5; }
+.history-list { display: grid; gap: .85rem; }
+.history-card { padding: 1rem; border: 1px solid #e1e8f2; border-radius: 12px; background: #fcfdff; }
+.history-date { font-weight: 700; font-size: .9rem; }
+.history-items { margin: .75rem 0 0; padding: 0; list-style: none; display: grid; gap: .5rem; }
+.history-items li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding-top: .5rem; border-top: 1px solid #edf1f7; }
+.compact-button { width: auto; min-height: 36px; margin-top: 0; padding: 0 .9rem; }
+.status-failed { background: #fff0ef; color: #8d2929; }
+.status-no_results { background: #f2f4f8; color: #52637c; }
+
 @media (max-width: 560px) {
   body { padding: 1rem .7rem; }
   .name-fields { grid-template-columns: 1fr; gap: .3rem; }
