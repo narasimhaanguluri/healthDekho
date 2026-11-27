@@ -174,6 +174,8 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 .product-facts dd { margin: 0; font-weight: 650; text-align: right; }
 
 .register-button { margin-top: auto; width: 100%; }
+.table-action-button { width: auto; min-height: 36px; margin-top: 0; padding: 0 .95rem; }
+.policy-table td.reason-cell { white-space: normal; min-width: 240px; max-width: 360px; line-height: 1.45; }
 
 .pagination-bar {
   display: flex;
