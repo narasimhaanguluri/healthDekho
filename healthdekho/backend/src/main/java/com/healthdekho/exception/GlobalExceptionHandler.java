@@ -84,15 +84,6 @@ public class GlobalExceptionHandler {
                 "The requested policy was not found.");
     }
 
-    @ExceptionHandler(AiServiceUnavailableException.class)
-    public ResponseEntity<Map<String, Object>> aiServiceUnavailable() {
-        return problem(
-                HttpStatus.BAD_GATEWAY,
-                ApiErrorCodes.AI_SERVICE_UNAVAILABLE,
-                "AI service unavailable",
-                "The AI provider could not complete the request.");
-    }
-
     @ExceptionHandler(AiRecommendationUnavailableException.class)
     public ResponseEntity<Map<String, Object>> aiRecommendationUnavailable() {
         return problem(

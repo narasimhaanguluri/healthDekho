@@ -11,7 +11,6 @@ public final class ApiErrorCodes {
     public static final String DUPLICATE_POLICY = "DUPLICATE_POLICY";
     public static final String POLICY_NOT_FOUND = "POLICY_NOT_FOUND";
     public static final String INVALID_PAGINATION = "INVALID_PAGINATION";
-    public static final String AI_SERVICE_UNAVAILABLE = "AI_SERVICE_UNAVAILABLE";
     public static final String AI_RECOMMENDATION_UNAVAILABLE = "AI_RECOMMENDATION_UNAVAILABLE";
     public static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
