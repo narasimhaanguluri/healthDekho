@@ -32,7 +32,19 @@ export function AppRoutes() {
         element={<ProtectedRoute><PolicyDetailsPage /></ProtectedRoute>}
       />
       <Route path="/account" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<main className="auth-card"><h1>Page not found</h1><Link to="/login">Return to sign in</Link></main>} />
+      <Route
+        path="*"
+        element={
+          <div className="auth-page">
+            <main className="auth-card auth-card-solo">
+              <p className="eyebrow">NAVIGATION</p>
+              <h1>Page not found</h1>
+              <p className="intro">The page you requested could not be found.</p>
+              <Link className="primary-link-button" to="/login">Return to sign in</Link>
+            </main>
+          </div>
+        }
+      />
     </Routes>
   );
 }
