@@ -139,6 +139,7 @@ describe("FR-1, FR-2 & FR-3 authentication, dashboard, recommendations, and poli
                 policyName: "Smart Life Protect",
                 policyType: "LIFE",
                 policyTermMonths: 120,
+                premiumFrequency: "MONTHLY",
                 premiumAmount: 2500,
                 sumInsured: 2500000,
                 recommendationReason: "Strong match for family protection.",
@@ -162,6 +163,7 @@ describe("FR-1, FR-2 & FR-3 authentication, dashboard, recommendations, and poli
           policyName: "Smart Life Protect",
           policyType: "LIFE",
           policyTermMonths: 120,
+          premiumFrequency: "MONTHLY",
           premiumAmount: 2500,
           sumInsured: 2500000,
           recommendationReason: "Strong match for family protection.",
@@ -175,14 +177,18 @@ describe("FR-1, FR-2 & FR-3 authentication, dashboard, recommendations, and poli
     renderAt("/recommendations");
 
     expect(await screen.findByRole("heading", { name: "AI Insurance Recommendations" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Date of Birth")).toHaveValue(customer.dateOfBirth);
     fireEvent.change(screen.getByLabelText("Insurance Goals"), { target: { value: "Family Protection" } });
     fireEvent.change(screen.getByLabelText("Preferred Policy Term (Months)"), { target: { value: "120" } });
     fireEvent.change(screen.getByLabelText("Insurance Type"), { target: { value: "LIFE" } });
     fireEvent.click(screen.getByRole("button", { name: "Get AI Recommendations" }));
 
     expect(await screen.findByText("Strong match for family protection.")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Premium Frequency" })).toBeInTheDocument();
+    expect(screen.getByText("MONTHLY")).toBeInTheDocument();
     expect(screen.getByText("SUCCEEDED")).toBeInTheDocument();
     expect(authApi.generateRecommendations).toHaveBeenCalledWith({
+      dateOfBirth: customer.dateOfBirth,
       insuranceGoals: "Family Protection",
       preferredPolicyTermMonths: 120,
       insuranceType: "LIFE",
@@ -238,6 +244,11 @@ describe("FR-1, FR-2 & FR-3 authentication, dashboard, recommendations, and poli
 
     expect(await screen.findByRole("heading", { name: "Review and Register Policy" })).toBeInTheDocument();
     expect(await screen.findByText("Health Secure Plus")).toBeInTheDocument();
+    expect(screen.getByText(customer.mobileNumber)).toBeInTheDocument();
+    expect(screen.getByText("Policy Start Date")).toBeInTheDocument();
+    expect(screen.getByText("Policy Maturity Date")).toBeInTheDocument();
+    expect(screen.getByText("Total Premium Payable")).toBeInTheDocument();
+    expect(screen.getByText("INR 18000.00")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Register" }));
 
@@ -247,6 +258,8 @@ describe("FR-1, FR-2 & FR-3 authentication, dashboard, recommendations, and poli
     fireEvent.click(screen.getByRole("button", { name: "Back To Dashboard" }));
 
     expect(await screen.findByText("HD-2026-000001")).toBeInTheDocument();
+    expect(screen.getByText("2026-11-26")).toBeInTheDocument();
+    expect(screen.getByText("2027-11-26")).toBeInTheDocument();
     expect(screen.getByTestId("policy-count")).toHaveTextContent("1");
     expect(await screen.findByText("No available products found.")).toBeInTheDocument();
   });
