@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { getCurrentCustomer, getProductDetails, registerPolicy } from "../api/auth.js";
+import AppNavbar from "../components/AppNavbar.jsx";
+import { typeBadgeClass } from "../utils/policyUi.js";
 
 function createIdempotencyKey() {
   if (typeof globalThis.crypto?.randomUUID === "function") {
@@ -131,112 +133,143 @@ export default function PolicyRegistrationPage() {
 
   if (confirmation) {
     return (
-      <main className="dashboard-shell narrow-shell">
-        <section className="dashboard-section">
-          <Link className="brand" to="/dashboard">HealthDekho</Link>
-          <p className="eyebrow">REGISTRATION CONFIRMED</p>
-          <h1>{confirmation.message || "Policy registered successfully"}</h1>
-          <p className="intro">
-            Your insurance policy and installment schedule have been created.
-          </p>
-          <dl className="profile-details">
-            <div><dt>Policy Number</dt><dd className="mono">{confirmation.policyNumber}</dd></div>
-            <div><dt>Policy Name</dt><dd>{confirmation.policyName}</dd></div>
-            <div><dt>Start Date</dt><dd>{confirmation.startDate}</dd></div>
-            <div><dt>Maturity Date</dt><dd>{confirmation.maturityDate}</dd></div>
-            <div><dt>Total Premium</dt><dd>INR {formatTotalPremium(confirmation.totalPremium)}</dd></div>
-            <div><dt>Installment Count</dt><dd>{confirmation.installmentCount}</dd></div>
-          </dl>
-          <div className="actions-row">
-            <button onClick={() => navigate("/dashboard")} type="button">
-              Back To Dashboard
-            </button>
-            <button
-              className="secondary-button"
-              onClick={() => navigate("/dashboard#my-policies")}
-              type="button"
-            >
-              View My Policies
-            </button>
-          </div>
-        </section>
-      </main>
+      <div className="page-wrapper">
+        <AppNavbar />
+        <main className="dashboard-shell narrow-shell">
+          <section className="dashboard-section">
+            <div className="confirmation-banner">
+              <span className="confirmation-check" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M5 13L9.5 17.5L19 7.5"
+                    stroke="currentColor"
+                    strokeWidth="2.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="eyebrow">REGISTRATION CONFIRMED</p>
+                <h1>{confirmation.message || "Policy registered successfully"}</h1>
+              </div>
+            </div>
+            <p className="intro">
+              Your insurance policy and installment schedule have been created and saved to your account.
+            </p>
+            <dl className="profile-details">
+              <div><dt>Policy Number</dt><dd className="mono">{confirmation.policyNumber}</dd></div>
+              <div><dt>Policy Name</dt><dd>{confirmation.policyName}</dd></div>
+              <div><dt>Start Date</dt><dd className="num">{confirmation.startDate}</dd></div>
+              <div><dt>Maturity Date</dt><dd className="num">{confirmation.maturityDate}</dd></div>
+              <div><dt>Total Premium</dt><dd className="num">INR {formatTotalPremium(confirmation.totalPremium)}</dd></div>
+              <div><dt>Installment Count</dt><dd className="num">{confirmation.installmentCount}</dd></div>
+            </dl>
+            <div className="actions-row">
+              <button onClick={() => navigate("/dashboard")} type="button">
+                Back To Dashboard
+              </button>
+              <button
+                className="secondary-button"
+                onClick={() => navigate("/dashboard#my-policies")}
+                type="button"
+              >
+                View My Policies
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main className="dashboard-shell narrow-shell">
-      <section className="dashboard-section">
-        <div className="section-header-between">
-          <Link className="brand" to="/dashboard">HealthDekho</Link>
-          <Link to="/dashboard">Back To Dashboard</Link>
-        </div>
-        <p className="eyebrow">POLICY REGISTRATION</p>
-        <h1>Review and Register Policy</h1>
+    <div className="page-wrapper">
+      <AppNavbar />
+      <main className="dashboard-shell narrow-shell">
+        <section className="page-hero">
+          <div className="page-hero-copy">
+            <p className="eyebrow">POLICY REGISTRATION</p>
+            <h1>Review and Register Policy</h1>
+            <p className="intro">
+              Verify your personal information, coverage term, and installment schedule summary before confirming.
+            </p>
+          </div>
+          <Link className="secondary-link-button" to="/dashboard">Back To Dashboard</Link>
+        </section>
 
-        {loading && <p className="status-message" role="status">Loading product details…</p>}
-        {!loading && loadError && <p className="error-message" role="alert">{loadError}</p>}
+        <section className="dashboard-section">
+          {loading && <p className="status-message" role="status">Loading product details…</p>}
+          {!loading && loadError && <p className="error-message" role="alert">{loadError}</p>}
 
-        {!loading && !loadError && product && (() => {
-          const startDateObj = getTodayLocalDate();
-          const startDateText = formatLocalIsoDate(startDateObj);
-          const maturityDateText = Number.isFinite(Number(product.termMonths))
-            ? formatLocalIsoDate(addMonthsClamped(startDateObj, Number(product.termMonths)))
-            : "—";
-          const totalPremiumPayable = calculateEstimatedTotalPremium(product);
+          {!loading && !loadError && product && (() => {
+            const startDateObj = getTodayLocalDate();
+            const startDateText = formatLocalIsoDate(startDateObj);
+            const maturityDateText = Number.isFinite(Number(product.termMonths))
+              ? formatLocalIsoDate(addMonthsClamped(startDateObj, Number(product.termMonths)))
+              : "—";
+            const totalPremiumPayable = calculateEstimatedTotalPremium(product);
 
-          return (
-            <>
-              {profile && (
-                <div className="sub-card">
-                  <h2>Applicant Information</h2>
-                  <dl className="profile-details">
-                    <div><dt>Customer Name</dt><dd>{`${profile.firstName} ${profile.lastName}`.trim()}</dd></div>
-                    <div><dt>Date of Birth</dt><dd>{profile.dateOfBirth}</dd></div>
-                    <div><dt>Email</dt><dd>{profile.email}</dd></div>
-                    {profile.mobileNumber && <div><dt>Mobile Number</dt><dd>{profile.mobileNumber}</dd></div>}
-                  </dl>
-                </div>
-              )}
+            return (
+              <>
+                <div className="review-grid">
+                  {profile && (
+                    <div className="sub-card">
+                      <h2>Applicant Information</h2>
+                      <dl className="profile-details">
+                        <div><dt>Customer Name</dt><dd>{`${profile.firstName} ${profile.lastName}`.trim()}</dd></div>
+                        <div><dt>Date of Birth</dt><dd className="num">{profile.dateOfBirth}</dd></div>
+                        <div><dt>Email</dt><dd>{profile.email}</dd></div>
+                        {profile.mobileNumber && <div><dt>Mobile Number</dt><dd className="num">{profile.mobileNumber}</dd></div>}
+                      </dl>
+                    </div>
+                  )}
 
-              <div className="sub-card">
-                <h2>Product Summary</h2>
-                <dl className="profile-details">
-                  <div><dt>Policy Type</dt><dd>{product.policyType}</dd></div>
-                  <div><dt>Policy Name</dt><dd>{product.policyName}</dd></div>
-                  <div><dt>Policy Term</dt><dd>{product.termMonths} months</dd></div>
-                  <div><dt>Policy Start Date</dt><dd>{startDateText}</dd></div>
-                  <div><dt>Policy Maturity Date</dt><dd>{maturityDateText}</dd></div>
-                  <div><dt>Premium Payment Frequency</dt><dd>{product.premiumFrequency}</dd></div>
-                  <div><dt>Premium Amount</dt><dd>INR {product.premiumAmount}</dd></div>
-                  <div><dt>Sum Insured</dt><dd>INR {product.sumInsured}</dd></div>
-                  <div>
-                    <dt>Total Premium Payable</dt>
-                    <dd>{totalPremiumPayable ? `INR ${totalPremiumPayable}` : "—"}</dd>
+                  <div className="sub-card">
+                    <div className="section-header-between">
+                      <h2>Product Summary</h2>
+                      <span className={typeBadgeClass(product.policyType)}>{product.policyType}</span>
+                    </div>
+                    <dl className="profile-details">
+                      <div><dt>Policy Type</dt><dd>{product.policyType}</dd></div>
+                      <div><dt>Policy Name</dt><dd>{product.policyName}</dd></div>
+                      <div><dt>Policy Term</dt><dd className="num">{product.termMonths} months</dd></div>
+                      <div><dt>Policy Start Date</dt><dd className="num">{startDateText}</dd></div>
+                      <div><dt>Policy Maturity Date</dt><dd className="num">{maturityDateText}</dd></div>
+                      <div><dt>Premium Payment Frequency</dt><dd>{product.premiumFrequency}</dd></div>
+                      <div><dt>Premium Amount</dt><dd className="num">INR {product.premiumAmount}</dd></div>
+                      <div><dt>Sum Insured</dt><dd className="num">INR {product.sumInsured}</dd></div>
+                      <div><dt>Age Eligibility</dt><dd className="num">{product.minAge}–{product.maxAge} years</dd></div>
+                    </dl>
+                    <div className="total-callout">
+                      <span className="total-callout-label">Total Premium Payable</span>
+                      <span className="total-callout-amount">
+                        {totalPremiumPayable ? `INR ${totalPremiumPayable}` : "—"}
+                      </span>
+                    </div>
                   </div>
-                  <div><dt>Age Eligibility</dt><dd>{product.minAge}–{product.maxAge} years</dd></div>
-                </dl>
-              </div>
+                </div>
 
-              {submitError && <p className="error-message" role="alert">{submitError}</p>}
+                {submitError && <p className="error-message" role="alert">{submitError}</p>}
 
-              <div className="actions-row">
-                <button disabled={submitting} onClick={handleRegister} type="button">
-                  {submitting ? "Registering…" : "Register"}
-                </button>
-                <button
-                  className="secondary-button"
-                  disabled={submitting}
-                  onClick={() => navigate("/dashboard")}
-                  type="button"
-                >
-                  Cancel
-                </button>
-              </div>
-            </>
-          );
-        })()}
-      </section>
-    </main>
+                <div className="actions-row">
+                  <button disabled={submitting} onClick={handleRegister} type="button">
+                    {submitting ? "Registering…" : "Register"}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    disabled={submitting}
+                    onClick={() => navigate("/dashboard")}
+                    type="button"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            );
+          })()}
+        </section>
+      </main>
+    </div>
   );
 }
