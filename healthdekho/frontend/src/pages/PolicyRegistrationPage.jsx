@@ -18,6 +18,46 @@ function formatTotalPremium(value) {
   return Number.isFinite(num) ? num.toFixed(2) : String(value);
 }
 
+function getTodayLocalDate() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function formatLocalIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addMonthsClamped(baseDate, monthsToAdd) {
+  const targetYear = baseDate.getFullYear() + Math.floor((baseDate.getMonth() + monthsToAdd) / 12);
+  const targetMonth = (baseDate.getMonth() + monthsToAdd) % 12;
+  const lastDayOfTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  const clampedDay = Math.min(baseDate.getDate(), lastDayOfTargetMonth);
+  return new Date(targetYear, targetMonth, clampedDay);
+}
+
+function resolveIntervalMonths(frequency) {
+  switch ((frequency || "").trim().toUpperCase()) {
+    case "MONTHLY": return 1;
+    case "QUARTERLY": return 3;
+    case "HALF_YEARLY": return 6;
+    case "YEARLY": return 12;
+    default: return null;
+  }
+}
+
+function calculateEstimatedTotalPremium(product) {
+  const intervalMonths = resolveIntervalMonths(product?.premiumFrequency);
+  const termMonths = Number(product?.termMonths);
+  const installmentAmount = Number(product?.premiumAmount);
+  if (!intervalMonths || !Number.isFinite(termMonths) || !Number.isFinite(installmentAmount)) {
+    return null;
+  }
+  return ((termMonths / intervalMonths) * installmentAmount).toFixed(2);
+}
+
 export default function PolicyRegistrationPage() {
   const { productCode } = useParams();
   const navigate = useNavigate();
@@ -137,49 +177,65 @@ export default function PolicyRegistrationPage() {
         {loading && <p className="status-message" role="status">Loading product details…</p>}
         {!loading && loadError && <p className="error-message" role="alert">{loadError}</p>}
 
-        {!loading && !loadError && product && (
-          <>
-            {profile && (
+        {!loading && !loadError && product && (() => {
+          const startDateObj = getTodayLocalDate();
+          const startDateText = formatLocalIsoDate(startDateObj);
+          const maturityDateText = Number.isFinite(Number(product.termMonths))
+            ? formatLocalIsoDate(addMonthsClamped(startDateObj, Number(product.termMonths)))
+            : "—";
+          const totalPremiumPayable = calculateEstimatedTotalPremium(product);
+
+          return (
+            <>
+              {profile && (
+                <div className="sub-card">
+                  <h2>Applicant Information</h2>
+                  <dl className="profile-details">
+                    <div><dt>Customer Name</dt><dd>{`${profile.firstName} ${profile.lastName}`.trim()}</dd></div>
+                    <div><dt>Date of Birth</dt><dd>{profile.dateOfBirth}</dd></div>
+                    <div><dt>Email</dt><dd>{profile.email}</dd></div>
+                    {profile.mobileNumber && <div><dt>Mobile Number</dt><dd>{profile.mobileNumber}</dd></div>}
+                  </dl>
+                </div>
+              )}
+
               <div className="sub-card">
-                <h2>Applicant Information</h2>
+                <h2>Product Summary</h2>
                 <dl className="profile-details">
-                  <div><dt>Customer Name</dt><dd>{`${profile.firstName} ${profile.lastName}`.trim()}</dd></div>
-                  <div><dt>Email</dt><dd>{profile.email}</dd></div>
-                  <div><dt>Date of Birth</dt><dd>{profile.dateOfBirth}</dd></div>
+                  <div><dt>Policy Type</dt><dd>{product.policyType}</dd></div>
+                  <div><dt>Policy Name</dt><dd>{product.policyName}</dd></div>
+                  <div><dt>Policy Term</dt><dd>{product.termMonths} months</dd></div>
+                  <div><dt>Policy Start Date</dt><dd>{startDateText}</dd></div>
+                  <div><dt>Policy Maturity Date</dt><dd>{maturityDateText}</dd></div>
+                  <div><dt>Premium Payment Frequency</dt><dd>{product.premiumFrequency}</dd></div>
+                  <div><dt>Premium Amount</dt><dd>INR {product.premiumAmount}</dd></div>
+                  <div><dt>Sum Insured</dt><dd>INR {product.sumInsured}</dd></div>
+                  <div>
+                    <dt>Total Premium Payable</dt>
+                    <dd>{totalPremiumPayable ? `INR ${totalPremiumPayable}` : "—"}</dd>
+                  </div>
+                  <div><dt>Age Eligibility</dt><dd>{product.minAge}–{product.maxAge} years</dd></div>
                 </dl>
               </div>
-            )}
 
-            <div className="sub-card">
-              <h2>Product Summary</h2>
-              <dl className="profile-details">
-                <div><dt>Product Name</dt><dd>{product.policyName}</dd></div>
-                <div><dt>Product Type</dt><dd>{product.policyType}</dd></div>
-                <div><dt>Sum Insured</dt><dd>INR {product.sumInsured}</dd></div>
-                <div><dt>Premium Amount</dt><dd>INR {product.premiumAmount}</dd></div>
-                <div><dt>Premium Frequency</dt><dd>{product.premiumFrequency}</dd></div>
-                <div><dt>Term Months</dt><dd>{product.termMonths} months</dd></div>
-                <div><dt>Age Eligibility</dt><dd>{product.minAge}–{product.maxAge} years</dd></div>
-              </dl>
-            </div>
+              {submitError && <p className="error-message" role="alert">{submitError}</p>}
 
-            {submitError && <p className="error-message" role="alert">{submitError}</p>}
-
-            <div className="actions-row">
-              <button disabled={submitting} onClick={handleRegister} type="button">
-                {submitting ? "Registering…" : "Register"}
-              </button>
-              <button
-                className="secondary-button"
-                disabled={submitting}
-                onClick={() => navigate("/dashboard")}
-                type="button"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+              <div className="actions-row">
+                <button disabled={submitting} onClick={handleRegister} type="button">
+                  {submitting ? "Registering…" : "Register"}
+                </button>
+                <button
+                  className="secondary-button"
+                  disabled={submitting}
+                  onClick={() => navigate("/dashboard")}
+                  type="button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          );
+        })()}
       </section>
     </main>
   );
