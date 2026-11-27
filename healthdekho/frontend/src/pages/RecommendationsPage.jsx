@@ -1,10 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { generateRecommendations, getRecommendationHistory } from "../api/auth.js";
+import { useAuth } from "../auth/AuthContext.jsx";
 
 function formatMoney(value) {
   const num = Number(value);
   return Number.isFinite(num) ? num.toFixed(2) : String(value);
+}
+
+function getTodayIsoDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatTimestamp(isoString) {
@@ -15,8 +24,12 @@ function formatTimestamp(isoString) {
 
 export default function RecommendationsPage() {
   const navigate = useNavigate();
+  const { customer } = useAuth();
+  const dobTouchedRef = useRef(false);
+  const todayIso = getTodayIsoDate();
 
   const [form, setForm] = useState({
+    dateOfBirth: customer?.dateOfBirth || "",
     insuranceGoals: "",
     preferredPolicyTermMonths: "",
     insuranceType: "",
@@ -30,6 +43,14 @@ export default function RecommendationsPage() {
     error: "",
     items: [],
   });
+
+  useEffect(() => {
+    if (!dobTouchedRef.current && customer?.dateOfBirth) {
+      setForm((current) =>
+        current.dateOfBirth ? current : { ...current, dateOfBirth: customer.dateOfBirth },
+      );
+    }
+  }, [customer]);
 
   const loadHistory = useCallback(async () => {
     setHistoryState((current) => ({ ...current, loading: true, error: "" }));
@@ -50,6 +71,9 @@ export default function RecommendationsPage() {
   }, [loadHistory]);
 
   function updateField(event) {
+    if (event.target.name === "dateOfBirth") {
+      dobTouchedRef.current = true;
+    }
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
   }
 
@@ -57,16 +81,18 @@ export default function RecommendationsPage() {
     event.preventDefault();
     setSubmitError("");
 
+    const dateOfBirth = form.dateOfBirth.trim();
     const goals = form.insuranceGoals.trim();
     const termValue = form.preferredPolicyTermMonths.trim();
     const type = form.insuranceType.trim();
 
-    if (!goals && !termValue && !type) {
-      setSubmitError("Enter at least one preference (goals, policy term, or insurance type).");
+    if (!dateOfBirth && !goals && !termValue && !type) {
+      setSubmitError("Enter at least one preference (date of birth, goals, policy term, or insurance type).");
       return;
     }
 
     const payload = {
+      dateOfBirth: dateOfBirth || null,
       insuranceGoals: goals || null,
       preferredPolicyTermMonths: termValue ? Number(termValue) : null,
       insuranceType: type || null,
@@ -121,6 +147,17 @@ export default function RecommendationsPage() {
           />
           <div className="name-fields">
             <div>
+              <label htmlFor="rec-dob">Date of Birth</label>
+              <input
+                id="rec-dob"
+                max={todayIso}
+                name="dateOfBirth"
+                onChange={updateField}
+                type="date"
+                value={form.dateOfBirth}
+              />
+            </div>
+            <div>
               <label htmlFor="preferred-term">Preferred Policy Term (Months)</label>
               <input
                 id="preferred-term"
@@ -132,16 +169,16 @@ export default function RecommendationsPage() {
                 value={form.preferredPolicyTermMonths}
               />
             </div>
-            <div>
-              <label htmlFor="insurance-type">Insurance Type</label>
-              <select id="insurance-type" name="insuranceType" onChange={updateField} value={form.insuranceType}>
-                <option value="">Any type</option>
-                <option value="HEALTH">HEALTH</option>
-                <option value="LIFE">LIFE</option>
-                <option value="RETIREMENT">RETIREMENT</option>
-                <option value="EDUCATION">EDUCATION</option>
-              </select>
-            </div>
+          </div>
+          <div>
+            <label htmlFor="insurance-type">Insurance Type</label>
+            <select id="insurance-type" name="insuranceType" onChange={updateField} value={form.insuranceType}>
+              <option value="">Any type</option>
+              <option value="HEALTH">HEALTH</option>
+              <option value="LIFE">LIFE</option>
+              <option value="RETIREMENT">RETIREMENT</option>
+              <option value="EDUCATION">EDUCATION</option>
+            </select>
           </div>
           {submitError && <p className="error-message" role="alert">{submitError}</p>}
           <button disabled={submitting} type="submit">
@@ -162,30 +199,47 @@ export default function RecommendationsPage() {
           </p>
         )}
         {!submitting && result && result.recommendations.length > 0 && (
-          <div className="product-grid">
-            {result.recommendations.map((item) => (
-              <article className="product-card" key={item.productCode}>
-                <div className="product-card-top">
-                  <span className="type-badge">{item.policyType}</span>
-                  <span className="suitability-badge">{item.suitability}</span>
-                </div>
-                <p className="mono product-code">{item.productCode}</p>
-                <h3>{item.policyName}</h3>
-                <dl className="product-facts">
-                  <div><dt>Policy Term</dt><dd>{item.policyTermMonths} months</dd></div>
-                  <div><dt>Premium Amount</dt><dd>INR {formatMoney(item.premiumAmount)}</dd></div>
-                  <div><dt>Sum Insured</dt><dd>INR {formatMoney(item.sumInsured)}</dd></div>
-                </dl>
-                <p className="recommendation-reason">{item.recommendationReason}</p>
-                <button
-                  className="register-button"
-                  onClick={() => navigate(`/policies/register/${encodeURIComponent(item.productCode)}`)}
-                  type="button"
-                >
-                  Register
-                </button>
-              </article>
-            ))}
+          <div className="table-scroll">
+            <table className="policy-table">
+              <thead>
+                <tr>
+                  <th>Product Code</th>
+                  <th>Policy Name</th>
+                  <th>Policy Type</th>
+                  <th>Policy Term</th>
+                  <th>Sum Insured</th>
+                  <th>Premium Frequency</th>
+                  <th>Premium Amount</th>
+                  <th>Recommendation Reason</th>
+                  <th>Suitability</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.recommendations.map((item) => (
+                  <tr key={item.productCode}>
+                    <td className="mono">{item.productCode}</td>
+                    <td>{item.policyName}</td>
+                    <td><span className="type-badge">{item.policyType}</span></td>
+                    <td>{item.policyTermMonths} months</td>
+                    <td>INR {formatMoney(item.sumInsured)}</td>
+                    <td>{item.premiumFrequency || "—"}</td>
+                    <td>INR {formatMoney(item.premiumAmount)}</td>
+                    <td className="reason-cell">{item.recommendationReason}</td>
+                    <td><span className="suitability-badge">{item.suitability}</span></td>
+                    <td>
+                      <button
+                        className="table-action-button"
+                        onClick={() => navigate(`/policies/register/${encodeURIComponent(item.productCode)}`)}
+                        type="button"
+                      >
+                        Register
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
