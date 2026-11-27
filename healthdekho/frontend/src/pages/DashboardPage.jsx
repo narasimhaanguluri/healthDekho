@@ -127,13 +127,16 @@ export default function DashboardPage() {
             <table className="policy-table">
               <thead>
                 <tr>
-                  <th>Policy Number</th>
+                  <th>Policy Identifier</th>
                   <th>Policy Name</th>
                   <th>Policy Type</th>
-                  <th>Status</th>
-                  <th>Term</th>
-                  <th>Premium</th>
+                  <th>Policy Term</th>
+                  <th>Policy Start Date</th>
+                  <th>Policy Maturity Date</th>
+                  <th>Premium Frequency</th>
+                  <th>Premium Amount</th>
                   <th>Sum Insured</th>
+                  <th>Policy Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -146,10 +149,13 @@ export default function DashboardPage() {
                     </td>
                     <td>{policy.policyName}</td>
                     <td><span className="type-badge">{policy.policyType}</span></td>
-                    <td><span className="status-badge">{policy.policyStatus}</span></td>
                     <td>{policy.policyTerm} months</td>
-                    <td>INR {policy.premiumAmount} / {policy.premiumFrequency}</td>
+                    <td>{policy.startDate}</td>
+                    <td>{policy.maturityDate}</td>
+                    <td>{policy.premiumFrequency}</td>
+                    <td>INR {policy.premiumAmount}</td>
                     <td>INR {policy.sumInsured}</td>
+                    <td><span className="status-badge">{policy.policyStatus}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -174,29 +180,43 @@ export default function DashboardPage() {
         )}
         {!productsState.loading && !productsState.error && productsState.data.items.length > 0 && (
           <>
-            <div className="product-grid">
-              {productsState.data.items.map((product) => (
-                <article className="product-card" key={product.productCode}>
-                  <div className="product-card-top">
-                    <span className="type-badge">{product.policyType}</span>
-                    <span className="mono product-code">{product.productCode}</span>
-                  </div>
-                  <h3>{product.policyName}</h3>
-                  <dl className="product-facts">
-                    <div><dt>Premium Amount</dt><dd>INR {product.premiumAmount} ({product.premiumFrequency})</dd></div>
-                    <div><dt>Sum Insured</dt><dd>INR {product.sumInsured}</dd></div>
-                    <div><dt>Term</dt><dd>{product.termMonths} months</dd></div>
-                    <div><dt>Entry Age</dt><dd>{product.minAge}–{product.maxAge} yrs</dd></div>
-                  </dl>
-                  <button
-                    className="register-button"
-                    onClick={() => navigate(`/policies/register/${encodeURIComponent(product.productCode)}`)}
-                    type="button"
-                  >
-                    Register
-                  </button>
-                </article>
-              ))}
+            <div className="table-scroll">
+              <table className="policy-table">
+                <thead>
+                  <tr>
+                    <th>Product Code</th>
+                    <th>Policy Name</th>
+                    <th>Policy Type</th>
+                    <th>Policy Term</th>
+                    <th>Sum Insured</th>
+                    <th>Premium Frequency</th>
+                    <th>Premium Amount</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productsState.data.items.map((product) => (
+                    <tr key={product.productCode}>
+                      <td className="mono">{product.productCode}</td>
+                      <td>{product.policyName}</td>
+                      <td><span className="type-badge">{product.policyType}</span></td>
+                      <td>{product.termMonths} months</td>
+                      <td>INR {product.sumInsured}</td>
+                      <td>{product.premiumFrequency}</td>
+                      <td>INR {product.premiumAmount}</td>
+                      <td>
+                        <button
+                          className="table-action-button"
+                          onClick={() => navigate(`/policies/register/${encodeURIComponent(product.productCode)}`)}
+                          type="button"
+                        >
+                          Register
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             {productsState.data.totalPages > 1 && (
               <div className="pagination-bar">
