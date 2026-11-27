@@ -178,7 +178,8 @@ public class RecommendationPersistenceService {
             return List.of();
         }
         try {
-            return objectMapper.readValue(snapshotJson, new TypeReference<>() {});
+            return objectMapper.readValue(snapshotJson, new TypeReference<>() {
+            });
         } catch (JsonProcessingException exception) {
             return List.of();
         }
@@ -193,10 +194,8 @@ public class RecommendationPersistenceService {
     }
 
     private String trimToNull(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.trim();
+        String sanitized = RecommendationServiceImpl.sanitizeForStorage(value);
+        return sanitized.isEmpty() ? null : sanitized;
     }
 
     private String normalizeUpperOrNull(String value) {

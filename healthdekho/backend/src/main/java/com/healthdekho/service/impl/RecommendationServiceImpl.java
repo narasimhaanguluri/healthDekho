@@ -2,7 +2,6 @@ package com.healthdekho.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.healthdekho.ai.AiProperties;
 import com.healthdekho.dto.RecommendationHistoryEntryResponse;
 import com.healthdekho.dto.RecommendationHistoryResponse;
 import com.healthdekho.dto.RecommendationItemResponse;
@@ -30,6 +29,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     private static final int MAX_SUITABILITY_LENGTH = 100;
 
     private final ChatClient chatClient;
-    private final AiProperties aiProperties;
+    private final String modelId;
     private final RecommendationPromptBuilder promptBuilder;
     private final RecommendationPersistenceService persistenceService;
     private final AIRecommendationRequestRepository requestRepository;
@@ -51,14 +51,14 @@ public class RecommendationServiceImpl implements RecommendationService {
 
     public RecommendationServiceImpl(
             ChatClient chatClient,
-            AiProperties aiProperties,
+            @Value("${spring.ai.bedrock.converse.chat.options.model}") String modelId,
             RecommendationPromptBuilder promptBuilder,
             RecommendationPersistenceService persistenceService,
             AIRecommendationRequestRepository requestRepository,
             AIRecommendationItemRepository itemRepository,
             ObjectMapper objectMapper) {
         this.chatClient = chatClient;
-        this.aiProperties = aiProperties;
+        this.modelId = modelId;
         this.promptBuilder = promptBuilder;
         this.persistenceService = persistenceService;
         this.requestRepository = requestRepository;
@@ -69,7 +69,6 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResponse generateRecommendations(UUID customerId, RecommendationRequest request) {
         PreparedCandidates prepared = persistenceService.prepareCandidates(customerId, request);
-        String modelId = aiProperties.bedrock() != null ? aiProperties.bedrock().modelId() : null;
 
         UUID requestId = persistenceService.createPendingRequest(
                 prepared.customerId(),
@@ -189,15 +188,15 @@ public class RecommendationServiceImpl implements RecommendationService {
                 throw new AiRecommendationUnavailableException("AI model returned duplicate product recommendations.");
             }
 
-            String reason = itemNode.path("recommendationReason").asText("").trim();
+            String reason = sanitizeForStorage(itemNode.path("recommendationReason").asText(""));
             if (reason.isEmpty()) {
                 throw new AiRecommendationUnavailableException("AI model omitted recommendation reason.");
             }
             if (reason.length() > MAX_REASON_LENGTH) {
-                reason = reason.substring(0, MAX_REASON_LENGTH);
+                reason = reason.substring(0, MAX_REASON_LENGTH).trim();
             }
 
-            String suitability = itemNode.path("suitability").asText("").trim().toUpperCase(Locale.ROOT);
+            String suitability = sanitizeForStorage(itemNode.path("suitability").asText("")).toUpperCase(Locale.ROOT);
             if (suitability.isEmpty()) {
                 throw new AiRecommendationUnavailableException("AI model omitted suitability.");
             }
@@ -219,6 +218,35 @@ public class RecommendationServiceImpl implements RecommendationService {
         }
 
         return validated;
+    }
+
+    /**
+     * Normalizes AI text to printable ASCII so PostgreSQL databases using single-byte
+     * encodings such as WIN1252 do not fail with SQLState 22P05 (e.g. for the ₹ symbol).
+     */
+    static String sanitizeForStorage(String value) {
+        if (value == null) {
+            return "";
+        }
+        StringBuilder out = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+            switch (ch) {
+                case '\u20B9' -> out.append("INR ");
+                case '\u2013', '\u2014', '\u2212' -> out.append('-');
+                case '\u2018', '\u2019' -> out.append('\'');
+                case '\u201C', '\u201D' -> out.append('"');
+                case '\u2022' -> out.append('*');
+                case '\u2026' -> out.append("...");
+                case '\u00A0' -> out.append(' ');
+                default -> {
+                    if ((ch >= 0x20 && ch <= 0x7E) || ch == '\n' || ch == '\r' || ch == '\t') {
+                        out.append(ch);
+                    }
+                }
+            }
+        }
+        return out.toString().replaceAll(" {2,}", " ").trim();
     }
 
     private String stripCodeFences(String raw) {
