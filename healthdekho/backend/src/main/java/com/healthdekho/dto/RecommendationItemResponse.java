@@ -7,6 +7,7 @@ public record RecommendationItemResponse(
         String policyName,
         String policyType,
         Integer policyTermMonths,
+        String premiumFrequency,
         BigDecimal premiumAmount,
         BigDecimal sumInsured,
         String recommendationReason,
