@@ -55,6 +55,7 @@ public class RecommendationPromptBuilder {
                         c.policyName(),
                         c.policyType(),
                         c.policyTermMonths(),
+                        c.premiumFrequency(),
                         c.premiumAmount(),
                         c.sumInsured()))
                 .collect(Collectors.toList());
@@ -95,6 +96,7 @@ public class RecommendationPromptBuilder {
             String policyName,
             String policyType,
             Integer policyTermMonths,
+            String premiumFrequency,
             BigDecimal premiumAmount,
             BigDecimal sumInsured) {
     }

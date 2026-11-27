@@ -65,11 +65,12 @@ public class RecommendationPersistenceService {
                 .orElseThrow(AuthenticationFailedException::new);
 
         LocalDate today = LocalDate.now();
-        if (customer.getDateOfBirth() == null || customer.getDateOfBirth().isAfter(today)) {
+        LocalDate effectiveDob = request.dateOfBirth() != null ? request.dateOfBirth() : customer.getDateOfBirth();
+        if (effectiveDob == null || effectiveDob.isAfter(today)) {
             throw new IllegalArgumentException("Customer date of birth is invalid.");
         }
 
-        int customerAge = Period.between(customer.getDateOfBirth(), today).getYears();
+        int customerAge = Period.between(effectiveDob, today).getYears();
 
         Set<UUID> ownedProductIds = policyRepository
                 .findByCustomerIdOrderByStartDateDescPolicyNumberAsc(customer.getId())
@@ -87,6 +88,7 @@ public class RecommendationPersistenceService {
                         product.getName(),
                         product.getProductType(),
                         product.getTermMonths(),
+                        product.getPremiumFrequency(),
                         product.getPremiumPerInstallment(),
                         product.getSumInsured()))
                 .toList();
@@ -160,6 +162,7 @@ public class RecommendationPersistenceService {
                     snapshot.policyName(),
                     snapshot.policyType(),
                     snapshot.policyTermMonths(),
+                    snapshot.premiumFrequency(),
                     snapshot.premiumAmount(),
                     snapshot.sumInsured(),
                     validated.recommendationReason(),
@@ -211,6 +214,7 @@ public class RecommendationPersistenceService {
             String policyName,
             String policyType,
             Integer policyTermMonths,
+            String premiumFrequency,
             BigDecimal premiumAmount,
             BigDecimal sumInsured) {
     }

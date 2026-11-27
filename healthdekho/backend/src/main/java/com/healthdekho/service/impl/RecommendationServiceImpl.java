@@ -107,11 +107,11 @@ public class RecommendationServiceImpl implements RecommendationService {
                     requestId,
                     RecommendationPersistenceService.STATUS_SUCCEEDED,
                     savedItems);
-        } catch (AiRecommendationUnavailableException exception) {
-            persistenceService.markFailed(requestId);
-            throw exception;
         } catch (RuntimeException exception) {
             persistenceService.markFailed(requestId);
+            if (exception instanceof AiRecommendationUnavailableException aiException) {
+                throw aiException;
+            }
             throw new AiRecommendationUnavailableException("AI recommendation generation failed.", exception);
         }
     }
@@ -290,11 +290,15 @@ public class RecommendationServiceImpl implements RecommendationService {
                     InsuranceProduct product = item.getProduct();
                     CandidateProductSnapshot snapshot = snapshotByProductId.get(product.getId());
                     if (snapshot != null) {
+                        String frequency = snapshot.premiumFrequency() != null
+                                ? snapshot.premiumFrequency()
+                                : product.getPremiumFrequency();
                         return new RecommendationItemResponse(
                                 snapshot.productCode(),
                                 snapshot.policyName(),
                                 snapshot.policyType(),
                                 snapshot.policyTermMonths(),
+                                frequency,
                                 snapshot.premiumAmount(),
                                 snapshot.sumInsured(),
                                 item.getReason(),
@@ -306,6 +310,7 @@ public class RecommendationServiceImpl implements RecommendationService {
                             product.getName(),
                             product.getProductType(),
                             product.getTermMonths(),
+                            product.getPremiumFrequency(),
                             product.getPremiumPerInstallment(),
                             product.getSumInsured(),
                             item.getReason(),
