@@ -1,9 +1,7 @@
 -- HealthDekho PostgreSQL Schema (7 Domain Tables)
--- Run this first on a fresh AWS RDS PostgreSQL database, then run products_seed.sql.
+-- Safe to re-run: only creates tables that do not already exist.
 
-SET standard_conforming_strings = on;
-
-CREATE TABLE public.customer (
+CREATE TABLE IF NOT EXISTS public.customer (
     id uuid NOT NULL,
     active boolean NOT NULL,
     created_at timestamp(6) with time zone NOT NULL,
@@ -21,7 +19,7 @@ CREATE TABLE public.customer (
     CONSTRAINT uk_customer_mobile_number UNIQUE (mobile_number)
 );
 
-CREATE TABLE public.insurance_product (
+CREATE TABLE IF NOT EXISTS public.insurance_product (
     id uuid NOT NULL,
     active boolean NOT NULL,
     max_age integer NOT NULL,
@@ -37,7 +35,7 @@ CREATE TABLE public.insurance_product (
     CONSTRAINT uk_insurance_product_code UNIQUE (product_code)
 );
 
-CREATE TABLE public.customer_policy (
+CREATE TABLE IF NOT EXISTS public.customer_policy (
     id uuid NOT NULL,
     maturity_date date,
     policy_number character varying(64) NOT NULL,
@@ -62,7 +60,7 @@ CREATE TABLE public.customer_policy (
     CONSTRAINT fk_customer_policy_product FOREIGN KEY (product_id) REFERENCES public.insurance_product(id)
 );
 
-CREATE TABLE public.premium_installment (
+CREATE TABLE IF NOT EXISTS public.premium_installment (
     id uuid NOT NULL,
     due_date date NOT NULL,
     grace_date date,
@@ -76,7 +74,7 @@ CREATE TABLE public.premium_installment (
     CONSTRAINT fk_premium_installment_policy FOREIGN KEY (policy_id) REFERENCES public.customer_policy(id)
 );
 
-CREATE TABLE public.premium_payment (
+CREATE TABLE IF NOT EXISTS public.premium_payment (
     id uuid NOT NULL,
     amount numeric(19,2) NOT NULL,
     created_at timestamp(6) with time zone NOT NULL,
@@ -92,7 +90,7 @@ CREATE TABLE public.premium_payment (
     CONSTRAINT fk_premium_payment_installment FOREIGN KEY (installment_id) REFERENCES public.premium_installment(id)
 );
 
-CREATE TABLE public.ai_recommendation_request (
+CREATE TABLE IF NOT EXISTS public.ai_recommendation_request (
     id uuid NOT NULL,
     calculated_age integer,
     candidate_snapshot jsonb,
@@ -108,7 +106,7 @@ CREATE TABLE public.ai_recommendation_request (
     CONSTRAINT fk_ai_rec_req_customer FOREIGN KEY (customer_id) REFERENCES public.customer(id)
 );
 
-CREATE TABLE public.ai_recommendation_item (
+CREATE TABLE IF NOT EXISTS public.ai_recommendation_item (
     id uuid NOT NULL,
     rank integer NOT NULL,
     reason character varying(2000) NOT NULL,
