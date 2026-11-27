@@ -24,8 +24,6 @@ backend/src/test/
 
 # Application Secrets
 application-local.properties
-application-dev.properties
-application-prod.properties
 
 # Frontend
 frontend/node_modules/
